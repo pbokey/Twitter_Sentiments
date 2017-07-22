@@ -12,6 +12,8 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var keywordInput: UITextField!
     
+    @IBOutlet weak var tweetLabel: UILabel!
+    
     @IBOutlet weak var positiveLabel: UILabel!
     
     @IBOutlet weak var neutralLabel: UILabel!
@@ -28,9 +30,10 @@ class ViewController: UIViewController {
     
     func analyzeSentiments(keyword: String) {
         var dict: [String: String] = [:]
-        var positive = ""
-        var neutral = ""
-        var negative = ""
+        var positive, neutral, negative, total: Double!
+        var posFormatted, neuFormatted, negFormatted: String!
+        
+        self.tweetLabel.text = "Loading..."
         
         guard let url = URL(string: "https://still-castle-73273.herokuapp.com/getSentiment?keyword=\(keyword)") else { return }
         let session = URLSession.shared
@@ -39,16 +42,22 @@ class ViewController: UIViewController {
                 let data = try JSONSerialization.jsonObject(with: data!, options: []) as! [String: String]
                 dict = data
                 print(dict)
-                positive = data["positive"]!
-                neutral = data["neutral"]!
-                negative = data["negative"]!
+                positive = Double(data["positive"]!)!
+                neutral = Double(data["neutral"]!)!
+                negative = Double(data["negative"]!)!
+                total = positive! + neutral! + negative!
+                posFormatted = String(format: "%.2f", ((positive!/total!) * 100))
+                neuFormatted = String(format: "%.2f", ((neutral!/total!) * 100))
+                negFormatted = String(format: "%.2f", ((negative!/total!) * 100))
+                
             } catch {
                 print(error)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // in half a second...
-                self.positiveLabel.text = "Positive Tweets: \(positive)"
-                self.neutralLabel.text = "Neutral Tweets: \(neutral)"
-                self.negativeLabel.text = "Negative Tweets: \(negative)"
+                self.tweetLabel.text = "In the last 100 tweets about \(keyword)"
+                self.positiveLabel.text = "Positive Tweets: \(posFormatted!)%"
+                self.neutralLabel.text = "Neutral Tweets: \(neuFormatted!)%"
+                self.negativeLabel.text = "Negative Tweets: \(negFormatted!)%"
             }
         }.resume()
         
