@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UITextFieldDelegate {
 
     @IBOutlet weak var keywordInput: UITextField!
     
@@ -22,10 +22,16 @@ class ViewController: UIViewController {
 
     
     @IBAction func submitBtn(_ sender: Any) {
+        keywordInput.resignFirstResponder()
         if let keyword = self.keywordInput.text {
-            let word = keyword.replacingOccurrences(of: " ", with: "_").lowercased()
+            UIApplication.shared.isNetworkActivityIndicatorVisible = true
+            let word = keyword.replacingOccurrences(of: " ", with: "_")
             analyzeSentiments(keyword: word)
         }
+    }
+    
+    @IBAction func searchButtonPressed(_ sender: Any) {
+        submitBtn(sender: sender)
     }
     
     func analyzeSentiments(keyword: String) {
@@ -53,15 +59,18 @@ class ViewController: UIViewController {
             } catch {
                 print(error)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // in half a second...
-                self.tweetLabel.text = "In the last 100 tweets about \(keyword)"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // in half a second...
+                let origWord = keyword.replacingOccurrences(of: "_", with: " ")
+                self.tweetLabel.text = "In the last 100 tweets about \(origWord)..."
                 self.positiveLabel.text = "Positive Tweets: \(posFormatted!)%"
                 self.neutralLabel.text = "Neutral Tweets: \(neuFormatted!)%"
                 self.negativeLabel.text = "Negative Tweets: \(negFormatted!)%"
+                UIApplication.shared.isNetworkActivityIndicatorVisible = false
             }
         }.resume()
         
     }
+
     
     func setup() {
         self.positiveLabel.text = "Positive Tweets"
@@ -77,6 +86,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib
         setup()
+        self.keywordInput.delegate = self
         
     }
 
